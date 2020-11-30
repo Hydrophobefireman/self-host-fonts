@@ -54,7 +54,10 @@ def create_output(text: str, out: Path, prefix: str, file: str, should_convert: 
         else:
             output.write(k.serialize())
     output.seek(0)
-    Path(file).write_text(output.read())
+    f = Path(file)
+    if f.stem == f.name:
+        f = Path(f"{f}.css")
+    f.write_text(output.read())
 
 
 def download(u, swap) -> str:
