@@ -1,6 +1,6 @@
-# Google fonts helper
+# Self host fonts
 
-A very simple python script that makes self hosting google fonts easy
+A very simple python script that makes self hosting (google) fonts easy
 
 # Requirements
 
@@ -23,4 +23,4 @@ Any google font configuration is supported as long as you provide the correct ur
 - `-s` if should force `font-display:swap` (defaults to `False`)
 - `-p` folder prefix for your woff files (defaults to `./`)
 - `-f` stylesheet name (defaults to `stylesheet.css`)
-- `--ua` the user agent (defaults to chrome 88) your user agent string determines which fonts google will serve
+- `--ua` the user agent (defaults to chrome 88) (your user agent string determines which font formats google will serve)
