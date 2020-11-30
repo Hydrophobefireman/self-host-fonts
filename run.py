@@ -7,6 +7,7 @@ import requests
 import tinycss2
 
 from URL import URL
+from convert import convert_to_woff
 
 DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.11 Safari/537.36"
 headers = {"user-agent": DEFAULT_USER_AGENT}
@@ -19,13 +20,14 @@ def download_fonts(
     out_dir=Path("."),
     prefix="./",
     file="stylesheet.css",
+    should_convert=True,
 ):
     headers["user-agent"] = user_agent
     dl = download(url, should_swap)
-    create_output(dl, out_dir, prefix, file)
+    create_output(dl, out_dir, prefix, file, should_convert)
 
 
-def create_output(text: str, out: Path, prefix: str, file: str):
+def create_output(text: str, out: Path, prefix: str, file: str, should_convert: bool):
     output = StringIO()
     css = tinycss2.parse_stylesheet(text)
     for k in css:
@@ -39,7 +41,12 @@ def create_output(text: str, out: Path, prefix: str, file: str):
                     print(f"downloading {url} to {f} ")
                     req = url.fetch(headers=headers)
                     f.write_bytes(req.content)
-                    output.write(f"url('{prefix}{f}')")
+                    if should_convert:
+                        print(f"converting {f} to woff")
+                        woff = f.parent / (f.stem + ".woff")
+                        woff.write_bytes(convert_to_woff(f))
+                        output.write(f'url("{prefix}{woff}") format("woff"),\n\t')
+                    output.write(f'url("{prefix}{f}")')
                     continue
                 else:
                     output.write(token.serialize())
@@ -67,13 +74,14 @@ def download(u, swap) -> str:
 
 def init():
 
-    parser = ArgumentParser(description="Helper to self host google fonts")
+    parser = ArgumentParser(description="Helper to self host external css fonts")
     parser.add_argument("url", metavar="URL", type=str, nargs="+")
     parser.add_argument("--ua", metavar="User Agent", default=DEFAULT_USER_AGENT)
     parser.add_argument("-d", metavar="Output directory", default="fonts")
     parser.add_argument("-s", action="store_true", default=False)
     parser.add_argument("-p", metavar="Prefix", default="./")
     parser.add_argument("-f", metavar="File", default="stylesheet.css")
+    parser.add_argument("-w", action="store_true", default=True)
     args = parser.parse_args()
 
     out_dir = Path(".") / args.d
@@ -83,7 +91,7 @@ def init():
     file = args.f
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    download_fonts(args.url[0], swap, ua, out_dir, prefix, file)
+    download_fonts(args.url[0], swap, ua, out_dir, prefix, file, args.w)
 
 
 if __name__ == "__main__":
