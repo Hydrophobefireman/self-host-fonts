@@ -32,7 +32,7 @@ def create_output(text: str, out: Path, prefix: str, file: str, should_convert: 
     css = tinycss2.parse_stylesheet(text)
     for k in css:
         if k.type == "at-rule" and k.at_keyword == "font-face":
-            output.write("@font-face{")
+            output.write("@font-face {")
             for token in k.content:
                 if token.type == "url":
                     url = URL(token.value)
