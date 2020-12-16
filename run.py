@@ -33,7 +33,12 @@ def create_output(text: str, out: Path, prefix: str, file: str, should_convert: 
     for k in css:
         if k.type == "at-rule" and k.at_keyword == "font-face":
             output.write("@font-face {")
+            skip_format = False
             for token in k.content:
+                if token.type == "function" and token.name == "format":
+                    if skip_format:
+                        skip_format = False
+                        continue
                 if token.type == "url":
                     url = URL(token.value)
                     name = url.get_suggested_filename()
@@ -41,12 +46,13 @@ def create_output(text: str, out: Path, prefix: str, file: str, should_convert: 
                     print(f"downloading {url} to {f} ")
                     req = url.fetch(headers=headers)
                     f.write_bytes(req.content)
-                    if should_convert:
+                    output.write(f'url("{prefix}{f}") format("{f.suffix[1:]}")')
+                    skip_format = True
+                    if should_convert and f.suffix != ".woff":
                         print(f"converting {f} to woff")
                         woff = f.parent / (f.stem + ".woff")
                         woff.write_bytes(convert_to_woff(f))
-                        output.write(f'url("{prefix}{woff}") format("woff"),\n\t')
-                    output.write(f'url("{prefix}{f}")')
+                        output.write(f',\n\turl("{prefix}{woff}") format("woff")')
                     continue
                 else:
                     output.write(token.serialize())
@@ -85,6 +91,7 @@ def init():
     parser.add_argument("-p", metavar="Prefix", default="./")
     parser.add_argument("-f", metavar="File", default="stylesheet.css")
     parser.add_argument("-w", action="store_true", default=True)
+
     args = parser.parse_args()
 
     out_dir = Path(".") / args.d
